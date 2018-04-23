@@ -1,9 +1,11 @@
 # Senior Android Developer
 
-Refactor the code to make it better and satisfy following requirements:
+Refactor and complete log in feature with following requirements:
 
-- [ ] Convert to kotlin.
-- [ ] Apply architecture such as MVP or MVVM or anything .
-- [ ] Write test and report code coverage. 
+- [ ] 100% kotlin.
+- [ ] Apply architecture such as MVP or MVVM or MVI or anything else.
+- [ ] Login uses phone number and password
+- [ ] Unit test
+- [ ] UI test uses Robolectric or Espresso
 - [ ] Report code coverage to [codecov](https://codecov.io/).
 - [ ] Integrate with CI such as [travis](https://travis-ci.org/), [CircleCI](https://circleci.com/) to automatic report code coverage for each pull request.
