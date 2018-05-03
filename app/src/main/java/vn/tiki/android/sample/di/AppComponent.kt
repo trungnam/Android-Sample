@@ -1,7 +1,7 @@
 package vn.tiki.android.sample.di
 
 import dagger.Component
-import vn.tiki.android.sample.KotlinLoginActivity
+import vn.tiki.android.sample.ui.KotlinLoginActivity
 import javax.inject.Singleton
 
 /**

@@ -1,7 +1,5 @@
 package vn.tiki.android.sample;
 
-import static android.Manifest.permission.READ_CONTACTS;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -28,8 +26,11 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.Manifest.permission.READ_CONTACTS;
 
 /**
  * A login screen that offers login via email/password.
@@ -130,7 +131,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_login);
     // Set up the login form.
-    mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+    mEmailView = (AutoCompleteTextView) findViewById(R.id.emailAutoCompleteText);
     populateAutoComplete();
 
     mPasswordView = (EditText) findViewById(R.id.password);
@@ -145,7 +146,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
       }
     });
 
-    Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+    Button mEmailSignInButton = (Button) findViewById(R.id.btnSignIn);
     mEmailSignInButton.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View view) {
@@ -153,8 +154,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
       }
     });
 
-    mLoginFormView = findViewById(R.id.login_form);
-    mProgressView = findViewById(R.id.login_progress);
+    mLoginFormView = findViewById(R.id.loginFromView);
+    mProgressView = findViewById(R.id.progressView);
   }
 
   /**

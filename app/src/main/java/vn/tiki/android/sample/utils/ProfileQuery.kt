@@ -10,7 +10,5 @@ interface ProfileQuery {
 
         val PROJECTION = arrayOf(ContactsContract.CommonDataKinds.Email.ADDRESS, ContactsContract.CommonDataKinds.Email.IS_PRIMARY)
 
-        const val ADDRESS = 0
-        const val IS_PRIMARY = 1
     }
 }

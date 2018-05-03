@@ -10,6 +10,7 @@ import vn.tiki.android.sample.ui.view.BaseView
 class KotlinLoginContact {
 
     interface KotlinLoginView : BaseView {
+
         fun showProgress(show: Boolean)
         fun addEmailsToAutoComplete(emailAddressCollection: List<String>)
         fun requestFocusError(view: View, strErr: String)
@@ -17,10 +18,15 @@ class KotlinLoginContact {
     }
 
     interface Presenter {
-        var context : Context?
+
+        var context: Context?
         fun isEmailValid(email: String)
         fun isPasswordValid(password: String)
         fun attemptLogin()
+        fun loadUserEmail()
+        fun populateAutoComplete()
+        fun reQuestLogin(email: String, password: String, phone : String)
+        fun mayRequestContacts(): Boolean
 
     }
 
