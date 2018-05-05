@@ -14,7 +14,6 @@ class InputValidateUtils {
 
         @JvmStatic
         fun isPasswordValid(password: String): Boolean {
-            //TODO: Replace this with your own logic
             return password.length > 4
         }
 

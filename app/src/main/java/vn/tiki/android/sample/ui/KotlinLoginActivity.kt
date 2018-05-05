@@ -58,7 +58,12 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
 
         btnSignIn.setOnClickListener({
             //handle login
-            var user = UserLogin("ss", "ss", "Ss", "d")
+            val user = UserLogin().apply {
+                email = emailAutoCompleteText.text.toString()
+                password = passwordEditText.text.toString()
+                phone = phoneAutoCompleteText.text.toString()
+                contry = selectContryNumberButton.text.toString()
+            }
             mPresenter.requestLogin(user)
         })
         selectContryNumberButton.setOnClickListener { _ ->

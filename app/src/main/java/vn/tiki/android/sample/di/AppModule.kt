@@ -4,6 +4,7 @@ import android.app.Application
 import dagger.Module
 import dagger.Provides
 import io.reactivex.disposables.CompositeDisposable
+import io.realm.Realm
 import javax.inject.Singleton
 
 /**
@@ -12,7 +13,7 @@ import javax.inject.Singleton
 @Module
 class AppModule {
 
-    lateinit var mApplication : Application
+    lateinit var mApplication: Application
     fun AppModule(mApplication: Application) {
         this.mApplication = mApplication
     }
@@ -27,6 +28,12 @@ class AppModule {
     @Singleton
     fun providerCompositeDisposable(): CompositeDisposable {
         return CompositeDisposable()
+    }
+
+    @Provides
+    @Singleton
+    fun providerRealm(): Realm {
+        return Realm.getDefaultInstance()
     }
 
 }
