@@ -31,7 +31,4 @@ abstract class BaseActivity : AppCompatActivity(), BaseView {
         return super.onOptionsItemSelected(item)
     }
 
-
-
-
 }

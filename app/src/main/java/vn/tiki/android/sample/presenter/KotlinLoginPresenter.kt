@@ -13,13 +13,25 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.support.design.widget.Snackbar
-import android.util.Patterns
+import android.text.TextUtils
+import android.util.Log
+import android.view.View
+import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.functions.Function3
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import vn.tiki.android.sample.R
+import vn.tiki.android.sample.model.UserLogin
 import vn.tiki.android.sample.ui.KotlinLoginActivity
 import vn.tiki.android.sample.ui.KotlinLoginActivity.Companion.REQUEST_READ_CONTACTS
 import vn.tiki.android.sample.ui.contact.KotlinLoginContact
+import vn.tiki.android.sample.utils.InputValidateUtils
 import vn.tiki.android.sample.utils.ProfileQuery.Companion.PROJECTION
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -27,48 +39,48 @@ import javax.inject.Inject
  * Created by trungnam1992 on 5/1/18.
  */
 class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginContact.KotlinLoginView>(), KotlinLoginContact.Presenter, LoaderCallbacks<Cursor> {
+
     override var context: Context? = null
 
     lateinit var mView: KotlinLoginContact.KotlinLoginView
+    val isvailidEmail = PublishSubject.create<Boolean>()
+    val isvailidPassword = PublishSubject.create<Boolean>()
+    val isvailidPhone = PublishSubject.create<Boolean>()
+    val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     companion object {
-//        val DUMMY_CREDENTIALS = arrayOf("foo@example.com:hello", "bar@example.com:world")
+        const val LONG_TIME_BUFFER = 500L
     }
 
-    val mAccountArr = ArrayList<String>()
+    private val mAccountArr = ArrayList<String>()
 
     override fun detachView(view: KotlinLoginContact.KotlinLoginView) {
-
+        compositeDisposable.clear()
     }
 
     override fun attachView(view: KotlinLoginContact.KotlinLoginView) {
         mView = view
+
+        //disable login for first time load
+        Observable.just(false)
+                .observeOn(Schedulers.io())
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe({ t ->
+                    isvailidPassword.onNext(false)
+                    isvailidPhone.onNext(false)
+                    isvailidEmail.onNext(false)
+                })
     }
 
-    ///logic impl
-
-    override fun isEmailValid(email: String) {
-//        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches() && !TextUtils.isEmpty(it)) {
-//            var ex = Exception("not vailid")
-//            throw ex
-//        }
-    }
-
-    override fun isPasswordValid(password: String) {
-
-    }
-
-    override fun attemptLogin() {
-
-    }
+    override fun attemptLogin() = Unit
 
     override fun loadUserEmail() {
+
         try {
             val account = AccountManager.get(context).accounts
             account?.let {
                 for (accountUser in it) {
-                    val pattern = Patterns.EMAIL_ADDRESS
-                    if (pattern.matcher(accountUser.name).matches()) {
+                    if (InputValidateUtils.isEmailValid(accountUser.name)) {
                         mAccountArr.add(accountUser.name)
                         mView.addEmailsToAutoComplete(mAccountArr)
                     }
@@ -81,6 +93,7 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     override fun populateAutoComplete() {
+
         if (!mayRequestContacts()) {
             return
         }
@@ -89,6 +102,138 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
 
         //list contact mail
         (context as KotlinLoginActivity).loaderManager.initLoader<Cursor>(0, null, this)
+    }
+
+    override fun validateEmail(strEmail: String, view: View) {
+        val sub = PublishSubject.create<String> { e ->
+            e.onNext(strEmail)
+        }
+        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+                .map {
+                    when {
+                        TextUtils.isEmpty(it) -> {
+                            throw Throwable(context?.getString(R.string.error_field_required))
+                        }
+                        else -> return@map it
+                    }
+                }
+                .map {
+                    when {
+                        !InputValidateUtils.isEmailValid(it) -> {
+                            throw Throwable(context?.getString(R.string.error_invalid_email))
+                        }
+                        else -> return@map it
+                    }
+                }
+
+                .doOnError {
+                    isvailidEmail.onNext(false)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ t ->
+                    mView.requestFocusError(view, null)
+                    isvailidEmail.onNext(true)
+
+                }, { t: Throwable ->
+                    mView.requestFocusError(view, t.message)
+
+                })
+//        compositeDisposable.add()
+    }
+
+    override fun validatePassword(strPassword: String, view: View) {
+        val sub = PublishSubject.create<String> { e ->
+            e.onNext(strPassword)
+        }
+
+        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+                .map {
+                    when {
+                        TextUtils.isEmpty(it) -> {
+                            throw Throwable(context?.getString(R.string.error_field_required))
+                        }
+                        else -> return@map it
+                    }
+                }
+                .map {
+                    when {
+                        !InputValidateUtils.isPasswordValid(it) -> {
+                            throw Throwable(context?.getString(R.string.error_invalid_password))
+                        }
+                        else -> return@map it
+                    }
+                }
+                .doOnError {
+                    isvailidPassword.onNext(false)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ t ->
+                    mView.requestFocusError(view, null)
+                    isvailidPassword.onNext(true)
+
+                }, { t: Throwable ->
+                    mView.requestFocusError(view, t.message)
+
+                })
+    }
+
+    override fun validatePhone(strPhone: String, view: View) {
+        val sub = PublishSubject.create<String> { e ->
+            e.onNext(strPhone)
+        }
+        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+                .map {
+                    when {
+                        TextUtils.isEmpty(it) -> {
+                            throw Throwable(context?.getString(R.string.error_field_required))
+                        }
+                        else -> return@map it
+                    }
+                }
+                .map {
+                    when {
+                        !InputValidateUtils.isPasswordValid(it) -> {
+                            throw Throwable(context?.getString(R.string.error_invalid_phone))
+                        }
+                        else -> return@map it
+                    }
+                }
+                .doOnError {
+                    isvailidPhone.onNext(false)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ t ->
+                    mView.requestFocusError(view, null)
+                    isvailidPhone.onNext(true)
+                }, { t: Throwable ->
+                    mView.requestFocusError(view, t.message)
+
+                })
+    }
+
+    //validate 3 field for enable button login
+    override fun combineLastestVailate() {
+
+        val observableCombine: Observable<Boolean> = Observable
+                .combineLatest(isvailidEmail, isvailidPhone, isvailidPassword,
+                        Function3 { t1, t2, t3 ->
+                            return@Function3 (t1 && t2 && t3)
+                        }
+                )
+        observableCombine.let {
+            val subscribe = it.subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ t: Boolean ->
+                        mView.enableLoginButton(t)
+
+                    }, { t: Throwable ->
+                        Log.e("nnam ", " " + t.message)
+                    })
+            compositeDisposable.add(subscribe)
+        }
     }
 
     override fun mayRequestContacts(): Boolean {
@@ -146,7 +291,28 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
         // nothing to do
     }
 
-    override fun reQuestLogin(email: String, password: String, phone: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun requestLogin(user: UserLogin) {
+
+        Single.just(user)
+                .doOnError({ t ->
+                    //
+                    mView.showProgress(false)
+                })
+                .doAfterSuccess({ _ ->
+                    //
+                    mView.showProgress(false)
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { t ->
+                            // handle logic login here
+                        },
+                        { t: Throwable ->
+                            // throw Ex msg
+
+                        }
+                )
+
     }
 }

@@ -5,8 +5,11 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_login.*
 import vn.tiki.android.sample.App
 import vn.tiki.android.sample.R
@@ -43,8 +46,38 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
         mPresenter.populateAutoComplete()
 
         btnSignIn.setOnClickListener({
-            //
+            //handle login
         })
+
+        phoneAutoCompleteText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) = Unit
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                mPresenter.validatePhone(s.toString(), phoneAutoCompleteText)
+            }
+        })
+        emailAutoCompleteText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) = Unit
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                mPresenter.validateEmail(s.toString(), emailAutoCompleteText)
+            }
+        })
+        passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                mPresenter.validatePassword(s.toString(), passwordEditText)
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                mPresenter.validatePassword(s.toString(), passwordEditText)
+            }
+        })
+        mPresenter.combineLastestVailate()
+
+    }
+
+    override fun isDestroyed(): Boolean {
+        return super.isDestroyed()
     }
 
     @SuppressLint("ObsoleteSdkInt")
@@ -99,10 +132,17 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
         emailAutoCompleteText.setAdapter(emailAdapter)
     }
 
-    override fun requestFocusError(view: View, strErr: String) {
-
+    override fun requestFocusError(view: View, strErr: String?) {
+        when (view) {
+            is TextView -> {
+                view.error = strErr
+                view.requestFocus()
+            }
+        }
     }
-
+    override fun enableLoginButton(isEnable: Boolean) {
+        btnSignIn.isEnabled = isEnable
+    }
     /**
      * Callback received when a permissions request has been completed.
      */
