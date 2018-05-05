@@ -46,10 +46,14 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     val isvailidEmail = PublishSubject.create<Boolean>()
     val isvailidPassword = PublishSubject.create<Boolean>()
     val isvailidPhone = PublishSubject.create<Boolean>()
+    val subEmail = PublishSubject.create<String>()
+    val subPassword = PublishSubject.create<String>()
+    val subPhone = PublishSubject.create<String>()
+
     val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
     companion object {
-        const val LONG_TIME_BUFFER = 500L
+        const val LONG_TIME_BUFFER = 300L
     }
 
     private val mAccountArr = ArrayList<String>()
@@ -105,10 +109,8 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     override fun validateEmail(strEmail: String, view: View) {
-        val sub = PublishSubject.create<String> { e ->
-            e.onNext(strEmail)
-        }
-        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        subEmail.onNext(strEmail)
+        subEmail.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -143,11 +145,10 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     override fun validatePassword(strPassword: String, view: View) {
-        val sub = PublishSubject.create<String> { e ->
-            e.onNext(strPassword)
-        }
 
-        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        subPassword.onNext(strPassword)
+
+        subPassword.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -180,10 +181,8 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     override fun validatePhone(strPhone: String, view: View) {
-        val sub = PublishSubject.create<String> { e ->
-            e.onNext(strPhone)
-        }
-        sub.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        subPhone.onNext(strPhone)
+        subPhone.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -292,16 +291,16 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     override fun requestLogin(user: UserLogin) {
+        mView.showProgress(true)
 
         Single.just(user)
                 .doOnError({ t ->
                     //
                     mView.showProgress(false)
                 })
-                .doAfterSuccess({ _ ->
-                    //
+                .doOnSuccess {
                     mView.showProgress(false)
-                })
+                }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(

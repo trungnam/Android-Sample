@@ -13,6 +13,7 @@ import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_login.*
 import vn.tiki.android.sample.App
 import vn.tiki.android.sample.R
+import vn.tiki.android.sample.model.UserLogin
 import vn.tiki.android.sample.presenter.KotlinLoginPresenter
 import vn.tiki.android.sample.ui.contact.KotlinLoginContact
 import vn.tiki.android.sample.ui.view.BaseActivity
@@ -47,6 +48,8 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
 
         btnSignIn.setOnClickListener({
             //handle login
+        var user = UserLogin("ss","ss","Ss", "d")
+            mPresenter.requestLogin(user)
         })
 
         phoneAutoCompleteText.addTextChangedListener(object : TextWatcher {
@@ -64,9 +67,7 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
             }
         })
         passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                mPresenter.validatePassword(s.toString(), passwordEditText)
-            }
+            override fun afterTextChanged(s: Editable?) = Unit
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 mPresenter.validatePassword(s.toString(), passwordEditText)
