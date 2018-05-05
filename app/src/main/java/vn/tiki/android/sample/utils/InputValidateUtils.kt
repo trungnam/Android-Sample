@@ -20,13 +20,11 @@ class InputValidateUtils {
 
         @JvmStatic
         fun isEmailValid(email: String): Boolean {
-            //TODO: Replace this with your own logic
             return EMAIL_PATTERN.matcher(email).matches()
         }
 
         @JvmStatic
         fun isPhoneValid(phone: String): Boolean {
-            //TODO: Replace this with your own logic
             return phone.length > 4
         }
     }

@@ -16,10 +16,15 @@ import android.support.design.widget.Snackbar
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
+import com.mukesh.countrypicker.Country
+import com.mukesh.countrypicker.CountryPicker
+import com.mukesh.countrypicker.OnCountryPickerListener
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Function3
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
@@ -29,6 +34,7 @@ import vn.tiki.android.sample.ui.KotlinLoginActivity
 import vn.tiki.android.sample.ui.KotlinLoginActivity.Companion.REQUEST_READ_CONTACTS
 import vn.tiki.android.sample.ui.contact.KotlinLoginContact
 import vn.tiki.android.sample.utils.InputValidateUtils
+import vn.tiki.android.sample.utils.LoginRegisterState.REGISTER_STATE
 import vn.tiki.android.sample.utils.ProfileQuery.Companion.PROJECTION
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -38,17 +44,23 @@ import javax.inject.Inject
 /**
  * Created by trungnam1992 on 5/1/18.
  */
-class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginContact.KotlinLoginView>(), KotlinLoginContact.Presenter, LoaderCallbacks<Cursor> {
+class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginContact.KotlinLoginView>(), KotlinLoginContact.Presenter, LoaderCallbacks<Cursor>, OnCountryPickerListener {
 
     override var context: Context? = null
 
-    lateinit var mView: KotlinLoginContact.KotlinLoginView
-    val isvailidEmail = PublishSubject.create<Boolean>()
-    val isvailidPassword = PublishSubject.create<Boolean>()
-    val isvailidPhone = PublishSubject.create<Boolean>()
-    val subEmail = PublishSubject.create<String>()
-    val subPassword = PublishSubject.create<String>()
-    val subPhone = PublishSubject.create<String>()
+    private lateinit var mView: KotlinLoginContact.KotlinLoginView
+    private val isvailidEmail = PublishSubject.create<Boolean>()
+    private val isvailidPassword = PublishSubject.create<Boolean>()
+    private val isvailidPhone = PublishSubject.create<Boolean>()
+    private val subEmail = PublishSubject.create<String>()
+    private val subPassword = PublishSubject.create<String>()
+    private val subPhone = PublishSubject.create<String>()
+    var disposablePhone: Disposable? = null
+    var disposableMail: Disposable? = null
+    var disposablePass: Disposable? = null
+
+    var observableCombine: Observable<Boolean>? = null
+    lateinit var subscribeRegisterCombine: Disposable
 
     val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
@@ -110,7 +122,7 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
 
     override fun validateEmail(strEmail: String, view: View) {
         subEmail.onNext(strEmail)
-        subEmail.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        disposableMail = subEmail.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -131,6 +143,9 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
                 .doOnError {
                     isvailidEmail.onNext(false)
                 }
+                .doOnDispose {
+                    mView.requestFocusError(view, null)
+                }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ t ->
@@ -141,14 +156,11 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
                     mView.requestFocusError(view, t.message)
 
                 })
-//        compositeDisposable.add()
     }
 
     override fun validatePassword(strPassword: String, view: View) {
-
         subPassword.onNext(strPassword)
-
-        subPassword.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        disposablePass = subPassword.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -168,6 +180,9 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
                 .doOnError {
                     isvailidPassword.onNext(false)
                 }
+                .doOnDispose {
+                    mView.requestFocusError(view, null)
+                }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ t ->
@@ -182,7 +197,7 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
 
     override fun validatePhone(strPhone: String, view: View) {
         subPhone.onNext(strPhone)
-        subPhone.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
+        disposablePhone = subPhone.debounce(LONG_TIME_BUFFER, TimeUnit.MILLISECONDS)
                 .map {
                     when {
                         TextUtils.isEmpty(it) -> {
@@ -193,7 +208,7 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
                 }
                 .map {
                     when {
-                        !InputValidateUtils.isPasswordValid(it) -> {
+                        !InputValidateUtils.isPhoneValid(it) -> {
                             throw Throwable(context?.getString(R.string.error_invalid_phone))
                         }
                         else -> return@map it
@@ -201,6 +216,9 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
                 }
                 .doOnError {
                     isvailidPhone.onNext(false)
+                }
+                .doOnDispose {
+                    mView.requestFocusError(view, null)
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -214,25 +232,71 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
     }
 
     //validate 3 field for enable button login
-    override fun combineLastestVailate() {
-
-        val observableCombine: Observable<Boolean> = Observable
+    override fun combineLastestValidate() {
+        observableCombine = Observable
                 .combineLatest(isvailidEmail, isvailidPhone, isvailidPassword,
                         Function3 { t1, t2, t3 ->
                             return@Function3 (t1 && t2 && t3)
                         }
                 )
-        observableCombine.let {
-            val subscribe = it.subscribeOn(Schedulers.io())
+        observableCombine?.let {
+            subscribeRegisterCombine = it.subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ t: Boolean ->
-                        mView.enableLoginButton(t)
+                        mView.enableRegLoginButton(t)
 
                     }, { t: Throwable ->
                         Log.e("nnam ", " " + t.message)
                     })
-            compositeDisposable.add(subscribe)
         }
+    }
+
+    override fun doGetContryCode() {
+        context?.let {
+            val countryPicker = CountryPicker.Builder().with(it)
+                    .listener(this)
+                    .build()
+            countryPicker.showDialog((context as KotlinLoginActivity).supportFragmentManager);
+        }
+
+    }
+
+    override fun onSelectCountry(contry: Country?) {
+        contry?.apply {
+            mView.setCodePhoneText(dialCode)
+        }
+    }
+
+    override fun switchState() {
+        subscribeRegisterCombine.dispose()
+        disposableMail?.dispose()
+        disposablePhone?.dispose()
+        disposablePass?.dispose()
+
+        if (mView.screenState() == REGISTER_STATE) {
+            mView.intiViewLoginState()
+            observableCombine = Observable
+                    .combineLatest(isvailidPhone, isvailidPassword,
+                            BiFunction { t1, t2 ->
+                                return@BiFunction (t1 && t2)
+                            }
+                    )
+            observableCombine?.let {
+                subscribeRegisterCombine = it.subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe({ t: Boolean ->
+                            mView.enableRegLoginButton(t)
+
+                        }, { t: Throwable ->
+                            Log.e("nnam ", " " + t.message)
+                        })
+            }
+
+        } else {
+            mView.intiViewRegisterState()
+            combineLastestValidate()
+        }
+
     }
 
     override fun mayRequestContacts(): Boolean {
@@ -312,6 +376,5 @@ class KotlinLoginPresenter @Inject constructor() : BasePresenter<KotlinLoginCont
 
                         }
                 )
-
     }
 }

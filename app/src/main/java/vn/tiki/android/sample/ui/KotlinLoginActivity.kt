@@ -17,6 +17,9 @@ import vn.tiki.android.sample.model.UserLogin
 import vn.tiki.android.sample.presenter.KotlinLoginPresenter
 import vn.tiki.android.sample.ui.contact.KotlinLoginContact
 import vn.tiki.android.sample.ui.view.BaseActivity
+import vn.tiki.android.sample.utils.LoginRegisterState
+import vn.tiki.android.sample.utils.LoginRegisterState.LOGIN_STATE
+import vn.tiki.android.sample.utils.LoginRegisterState.REGISTER_STATE
 import javax.inject.Inject
 
 
@@ -26,8 +29,11 @@ import javax.inject.Inject
  */
 class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
 
+
     @Inject
     lateinit var mPresenter: KotlinLoginPresenter
+
+    var screenState: LoginRegisterState = REGISTER_STATE
 
     companion object {
         const val REQUEST_READ_CONTACTS = 0
@@ -46,11 +52,18 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
         mPresenter.context = this
         mPresenter.populateAutoComplete()
 
+        switchLoginRegisterText.setOnClickListener({
+            mPresenter.switchState()
+        })
+
         btnSignIn.setOnClickListener({
             //handle login
-        var user = UserLogin("ss","ss","Ss", "d")
+            var user = UserLogin("ss", "ss", "Ss", "d")
             mPresenter.requestLogin(user)
         })
+        selectContryNumberButton.setOnClickListener { _ ->
+            mPresenter.doGetContryCode()
+        }
 
         phoneAutoCompleteText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) = Unit
@@ -73,12 +86,46 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
                 mPresenter.validatePassword(s.toString(), passwordEditText)
             }
         })
-        mPresenter.combineLastestVailate()
+        mPresenter.combineLastestValidate()
 
     }
 
-    override fun isDestroyed(): Boolean {
-        return super.isDestroyed()
+    override fun screenState(): LoginRegisterState {
+        return screenState
+    }
+
+    override fun setCodePhoneText(code: String) {
+        selectContryNumberButton.text = code
+    }
+
+    //Login - sign in mode
+    override fun intiViewLoginState() {
+        screenState = LOGIN_STATE
+        emailAutoCompleteText.text.clear()
+        emailAutoCompleteText.visibility = View.GONE
+        emailAutoCompleteText.error = null
+        phoneAutoCompleteText.text.clear()
+        phoneAutoCompleteText.error = null
+        passwordEditText.text.clear()
+        passwordEditText.error = null
+        btnSignIn.text = getString(R.string.action_sign_in_short)
+        switchLoginRegisterText.text = getString(R.string.action_register_new_account)
+        screenStateTextView.text = getString(R.string.state_sign_in_account)
+    }
+
+    //Login - Register  mode
+    override fun intiViewRegisterState() {
+        screenState = REGISTER_STATE
+        emailAutoCompleteText.visibility = View.VISIBLE
+        emailAutoCompleteText.text.clear()
+        emailAutoCompleteText.error = null
+        phoneAutoCompleteText.text.clear()
+        phoneAutoCompleteText.error = null
+        passwordEditText.text.clear()
+        passwordEditText.error = null
+        btnSignIn.text = getString(R.string.action_register_in)
+        switchLoginRegisterText.text = getString(R.string.action_sign_in_if_have_account)
+        screenStateTextView.text = getString(R.string.state_register_new_account)
     }
 
     @SuppressLint("ObsoleteSdkInt")
@@ -141,9 +188,11 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
             }
         }
     }
-    override fun enableLoginButton(isEnable: Boolean) {
+
+    override fun enableRegLoginButton(isEnable: Boolean) {
         btnSignIn.isEnabled = isEnable
     }
+
     /**
      * Callback received when a permissions request has been completed.
      */

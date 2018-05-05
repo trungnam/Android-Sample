@@ -31,6 +31,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/screenStateTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:padding="@dimen/activity_horizontal_margin"
+                android:text="@string/state_register_new_account"
+                android:textColor="@color/colorAccent"
+                android:textSize="@dimen/big_text_size"
+                android:textStyle="bold" />
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -38,7 +50,7 @@
                 android:orientation="horizontal">
 
                 <Button
-                    android:id="@+id/selectContryNumber"
+                    android:id="@+id/selectContryNumberButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
@@ -50,8 +62,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_centerHorizontal="true"
-                    android:layout_toEndOf="@+id/selectContryNumber"
-                    android:layout_toRightOf="@+id/selectContryNumber">
+                    android:layout_toEndOf="@+id/selectContryNumberButton"
+                    android:layout_toRightOf="@+id/selectContryNumberButton">
 
                     <AutoCompleteTextView
                         android:id="@+id/phoneAutoCompleteText"
@@ -105,9 +117,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/action_sign_in"
+                android:text="@string/action_register_in"
                 android:textStyle="bold" />
 
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/switchLoginRegisterText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/activity_horizontal_margin"
+                android:text="@string/action_sign_in_if_have_account"
+                android:textColor="@color/colorAccent" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
