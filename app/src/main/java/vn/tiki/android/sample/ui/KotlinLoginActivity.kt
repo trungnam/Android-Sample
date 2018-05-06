@@ -56,6 +56,7 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
             mPresenter.switchState()
         })
 
+        //Login or register click
         btnSignIn.setOnClickListener({
             //handle login
             val user = UserLogin().apply {
@@ -66,6 +67,11 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
             }
             mPresenter.requestLogin(user)
         })
+        //Log out Click
+        btnSignOut.setOnClickListener(View.OnClickListener {
+            mPresenter.requestLogOut()
+        })
+
         selectContryNumberButton.setOnClickListener { _ ->
             mPresenter.doGetContryCode()
         }
@@ -101,6 +107,19 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
 
     override fun setCodePhoneText(code: String) {
         selectContryNumberButton.text = code
+    }
+
+    override fun showErrorLoginOrRegister(strErr: String, isError: Boolean) {
+        when {
+            isError -> {
+                errorTextView.visibility = View.VISIBLE
+                errorTextView.text = strErr
+            }
+            else -> {
+                errorTextView.text = ""
+                errorTextView.visibility = View.GONE
+            }
+        }
     }
 
     //Login - sign in mode
@@ -171,11 +190,13 @@ class KotlinLoginActivity : BaseActivity(), KotlinLoginContact.KotlinLoginView {
                             progressView.visibility = if (show) View.VISIBLE else View.GONE
                         }
                     })
+            layoutLoginSuccessful.visibility = if (show) View.VISIBLE else View.GONE
         } else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             progressView.visibility = if (show) View.VISIBLE else View.GONE
             loginFromView.visibility = if (show) View.GONE else View.VISIBLE
+            layoutLoginSuccessful.visibility = if (show) View.VISIBLE else View.GONE
         }
     }
 
