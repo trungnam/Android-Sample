@@ -176,7 +176,7 @@ class KotlinLoginPresenterTest {
         }
 
         `when`(mDataRepository.requestLoginUser(stubUser)).thenReturn(
-                Single.error(Exception()))
+                Single.error(Exception("err msg")))
 
         mKotlinLoginPresenterTest.requestLogin(stubUser)
         verify(view, times(1)).showProgress(false)

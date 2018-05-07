@@ -3,7 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'realm-android'
+apply plugin: 'jacoco'
 
+jacoco {
+    toolVersion = "$jacocoVersion"
+}
 android {
     compileSdkVersion 27
     defaultConfig {
@@ -14,11 +18,26 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            testCoverageEnabled = true
+
         }
+        debug {
+            testCoverageEnabled = true
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
     }
 }
 
@@ -42,13 +61,15 @@ dependencies {
     kapt 'com.google.dagger:dagger-compiler:2.9'
     compileOnly 'javax.annotation:jsr250-api:1.0'
 
-    //contry picker code dial
+    //country picker code dial
     compile 'com.github.mukeshsolanki:country-picker-android:1.2.3'
 
     //Realm DB
     implementation 'io.realm:android-adapters:2.0.0'
 
+    //
     testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
@@ -59,6 +80,39 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+//jacoco Report
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    def fileFilter = ['**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      '**/*Test*.*',
+                      'android/**/*.*',
+                      '**/*InjectAdapter*.*',
+                      '**/*StaticInjection*.*',
+                      '**/*ModuleAdapter*.*']
+    def javaClasses = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: fileFilter)
+    def kotlinClasses = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaSrc = "$project.projectDir/src/main/java"
+    def kotlinSrc = "$project.projectDir/src/main/kotlin"
+
+    sourceDirectories = files([javaSrc, kotlinSrc])
+    classDirectories = files([javaClasses, kotlinClasses])
+    executionData = fileTree(dir: project.buildDir, includes: [
+            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+    ])
+}
+
 repositories {
     mavenCentral()
 }
