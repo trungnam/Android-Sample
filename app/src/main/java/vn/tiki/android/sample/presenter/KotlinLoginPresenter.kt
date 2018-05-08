@@ -13,7 +13,6 @@ import android.os.Bundle
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.support.design.widget.Snackbar
 import android.text.TextUtils
-import android.util.Log
 import android.view.View
 import com.mukesh.countrypicker.Country
 import com.mukesh.countrypicker.CountryPicker
@@ -258,8 +257,6 @@ open class KotlinLoginPresenter @Inject constructor(
                     .subscribe({ t: Boolean ->
                         mView.enableRegLoginButton(t)
 
-                    }, { t: Throwable ->
-                        Log.e("nnam ", " " + t.message)
                     })
         }
     }
