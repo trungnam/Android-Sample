@@ -93,7 +93,7 @@ tasks.withType(Test) {
     jacoco.includeNoLocationClasses = true
 }
 
-//jacoco Report
+//jacoco Report mix java+kotlin
 task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
     reports {
         xml.enabled = true
@@ -105,9 +105,14 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'crea
                       '**/Manifest*.*',
                       '**/*Test*.*',
                       'android/**/*.*',
-                      '**/*InjectAdapter*.*',
-                      '**/*StaticInjection*.*',
-                      '**/*ModuleAdapter*.*']
+                      '**/*$ViewInjector*.*',
+                      '**/*$ViewBinder*.*',
+                      '**/*$Lambda$*.*', // Jacoco can not handle several "$" in class name.
+                      '**/*$inlined$*.*', // Kotlin specific, Jacoco can not handle several "$" in class name.
+                      '**/*Module.*', // Modules for Dagger.
+                      '**/*Dagger*.*', // Dagger auto-generated code.
+                      '**/*MembersInjector*.*', // Dagger auto-generated code.
+                      '**/*_Provide*Factory*.*'] // Dagger auto-generated code.
     def javaClasses = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: fileFilter)
     def kotlinClasses = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
     def javaSrc = "$project.projectDir/src/main/java"
@@ -118,6 +123,73 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'crea
     executionData = fileTree(dir: project.buildDir, includes: [
             'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
     ])
+}
+
+//
+//topic https://android.jlelse.eu/improving-code-coverage-in-android-app-be8783370c1a
+//
+task customJacocoTestCoverageVerification(type: JacocoCoverageVerification, dependsOn: 'jacocoTestReport') {
+
+    def fileFilter = ['**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      '**/*Test*.*',
+                      'android/**/*.*',
+                      '**/*$ViewInjector*.*',
+                      '**/*$ViewBinder*.*',
+                      '**/*$Lambda$*.*', // Jacoco can not handle several "$" in class name.
+                      '**/*$inlined$*.*', // Kotlin specific, Jacoco can not handle several "$" in class name.
+                      '**/*Module.*', // Modules for Dagger.
+                      '**/*Dagger*.*', // Dagger auto-generated code.
+                      '**/*MembersInjector*.*', // Dagger auto-generated code.
+                      '**/*_Provide*Factory*.*'] // Dagger auto-generated code.
+    def javaClasses = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: fileFilter)
+    def kotlinClasses = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaSrc = "$project.projectDir/src/main/java"
+    def kotlinSrc = "$project.projectDir/src/main/kotlin"
+
+    sourceDirectories = files([javaSrc, kotlinSrc])
+    classDirectories = files([javaClasses, kotlinClasses])
+    executionData = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+
+
+    violationRules {
+        setFailOnViolation(true)
+
+//        rule {
+//            element = 'PACKAGE'
+//
+//            limit {
+//                value = 'COVEREDRATIO'
+//                counter = 'BRANCH'
+//                minimum = 0.8
+//            }
+//        }
+
+        rule {
+            element = 'PACKAGE'
+
+            limit {
+                value = 'COVEREDRATIO'
+                includes = ['vn.tiki.android.sample.presenter']
+                counter = 'INSTRUCTION'
+                minimum = 0.6
+            }
+        }
+
+        rule {
+            element = 'PACKAGE'
+            includes = ['vn.tiki.android.sample.presenter']
+            enabled = true
+
+            limit {
+                counter = 'CLASS'
+                value = 'MISSEDCOUNT'
+                maximum = 20
+            }
+        }
+    }
 }
 
 repositories {
