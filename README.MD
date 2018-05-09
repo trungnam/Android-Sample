@@ -1,16 +1,13 @@
-# Senior Android Developer
 
-Refactor and complete log in feature with following requirements:
-
-- [ ] 100% kotlin.
-- [ ] Apply architecture such as MVP or MVVM or MVI or anything else.
-- [ ] Login uses phone number and password
-- [ ] Unit test
-- [ ] UI test uses Robolectric or Espresso
-- [ ] Report code coverage to [codecov](https://codecov.io/).
-- [ ] Integrate with CI such as [travis](https://travis-ci.org/), [CircleCI](https://circleci.com/) to automatic report code coverage for each pull request.
-
-Assignment status :
+Status :
  Build : [![Build Status](https://travis-ci.org/trungnam/Android-Sample.svg?branch=kotlin_migration_mvp_rx)](https://travis-ci.org/trungnam/Android-Sample) Code coverate [![codecov](https://codecov.io/gh/trungnam/Android-Sample/branch/kotlin_migration_mvp_rx/graph/badge.svg)](https://codecov.io/gh/trungnam/Android-Sample)
  
- 
+Refactor and complete log in feature with following requirements:
+
+- [x] 99% kotlin. (little bit java with esooresso test using java)
+- [x] Apply architecture such as MVP or MVVM or MVI or anything else.
+- [x] Login uses phone number and password
+- [x] Unit test
+- [x] UI test uses Robolectric or Espresso
+- [x] Report code coverage to [codecov](https://codecov.io/).
+- [x] Integrate with CI such as [travis](https://travis-ci.org/), [CircleCI](https://circleci.com/) to automatic report code coverage for each pull request. 
