@@ -10,4 +10,4 @@ Refactor and complete log in feature with following requirements:
 - [x] Unit test
 - [x] UI test uses Robolectric or Espresso
 - [x] Report code coverage to [codecov](https://codecov.io/).
-- [x] Integrate with CI such as [travis](https://travis-ci.org/), [CircleCI](https://circleci.com/) to automatic report code coverage for each pull request. 
+- [x] Integrate with CI such as [travis](https://travis-ci.org/), [CircleCI](https://circleci.com/) to automatic report code coverage for each pull request.(it some issue with javcoco and kotlin so the code coverage not good so much :( ) 
