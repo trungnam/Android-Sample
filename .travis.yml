@@ -61,3 +61,4 @@ after_success:
 branches:
         only:
                 - kotlin_migration_mvp_rx
+                - kotlin_migration_mvp_rx_codedev
