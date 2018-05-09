@@ -5,7 +5,7 @@ Status :
 Refactor and complete log in feature with following requirements:
 
 - [x] 99% kotlin. (little bit java with espresso UI test using java)
-- [x] Apply architecture such as MVP or MVVM or MVI or anything else.
+- [x] Apply architecture such as MVP or MVVM or MVI or anything else. -> (mvp + dagger)
 - [x] Login uses phone number and password
 - [x] Unit test
 - [x] UI test uses Robolectric or Espresso
